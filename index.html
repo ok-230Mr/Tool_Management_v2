@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>機械工具選択</title>
+    <style>
+ body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 2em;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            margin: 1em;
+            padding: 1em 2em;
+            border: 1px solid black;
+            background-color: lightgray;
+            cursor: pointer;
+            font-size: 1.2em;
+            border: 1px solid #ccc;
+            background: #f1e767;
+            background: -webkit-gradient(linear, left top, left bottom, from(#fdfbfb), to(#ebedee));
+            background: -webkit-linear-gradient(top, #fdfbfb 0%, #ebedee 100%);
+            background: linear-gradient(to bottom, #fdfbfb 0%, #ebedee 100%);
+            -webkit-box-shadow: inset 1px 1px 1px #fff;
+            box-shadow: inset 1px 1px 1px #fff;
+            background: -webkit-gradient(linear, left bottom, left top, from(#fdfbfb), to(#ebedee));
+            background: -webkit-linear-gradient(bottom, #fdfbfb 0%, #ebedee 100%);
+            background: linear-gradient(to top, #fdfbfb 0%, #ebedee 100%);
+        }
+        /* 戻るボタンのスタイルを調整 */
+         .small-button {            
+             padding: 0.5em 1.5em;
+            font-size: 0.9em;
+            border-radius: 100vh;
+            border: 1px solid #ccc;
+            background: #f1e767;
+            background: -webkit-gradient(linear, left top, left bottom, from(#fdfbfb), to(#ebedee));
+            background: -webkit-linear-gradient(top, #fdfbfb 0%, #ebedee 100%);
+            background: linear-gradient(to bottom, #fdfbfb 0%, #ebedee 100%);
+            -webkit-box-shadow: inset 1px 1px 1px #fff;
+            box-shadow: inset 1px 1px 1px #fff;
+            background: -webkit-gradient(linear, left bottom, left top, from(#fdfbfb), to(#ebedee));
+            background: -webkit-linear-gradient(bottom, #fdfbfb 0%, #ebedee 100%);
+            background: linear-gradient(to top, #fdfbfb 0%, #ebedee 100%); 
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>工具選択</h1>
+        <p>操作を選んでください。</p>
+        <button onclick="location.href='tools_selection.html'">貸出</button>
+        <button onclick="location.href='history.html'">返却</button>
+        <br />
+        <!-- 戻るボタンを追加 -->
+        <button class="small-button" onclick="location.href='worker_name.html'">戻る</button>
+    </div>
+</body>
+</html>

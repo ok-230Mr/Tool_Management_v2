@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>貸出履歴</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 720px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        button {
+            margin: 0.5em 0;
+            padding: 0.5em 1em;
+            background-color: lightgray;
+            border: 1px solid black;
+            cursor: pointer;
+        }
+        .input-container {
+            margin-bottom: 20px;
+        }
+        .input-container label {
+            margin-right: 10px;
+        }
+        .input-container input {
+            padding: 5px;
+            font-size: 1em;
+        }
+        /* 返却済み行のスタイル */
+        .returned {
+            background-color: #ffebeb;
+            color: #666;
+        }
+        .returned button {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+    </style>
+    <script>
+       // 作業員の名前を取得する関数を修正
+       function getEmployeeName() {
+            // 1. URLからの取得を試みる
+            const urlParams = new URLSearchParams(window.location.search);
+            let employeeName = urlParams.get('employee');
+            
+            // 2. ローカルストレージからの取得を試みる
+            if (!employeeName) {
+                employeeName = localStorage.getItem('currentEmployee');
+            }
+            
+            // 3. セッションストレージからの取得を試みる
+            if (!employeeName) {
+                employeeName = sessionStorage.getItem('currentEmployee');
+            }
+            
+            return employeeName || '作業員未指定';
+        }
+
+        // 貸出履歴を読み込む
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('toolHistory')) || [];
+            const tableBody = document.getElementById('historyTableBody');
+            tableBody.innerHTML = '';
+
+            if (history.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5">履歴がありません。</td></tr>';
+            } else {
+                let inUseTools = [];
+                history.forEach((entry, index) => {
+                    const isReturned = entry.status === '返却済み';
+                    const row = `<tr class="${isReturned ? 'returned' : ''}">
+                        <td>${index + 1}</td>
+                        <td>${entry.date}</td>
+                        <td>${entry.name || '名前無し'}</td>
+                        <td>${entry.tools.join(', ')}</td>
+                        <td><button onclick="confirmReturn(${index})" ${isReturned ? 'disabled' : ''}>
+                            ${isReturned ? '返却済' : '返却'}
+                        </button></td>
+                    </tr>`;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                    // 未返却の工具を inUseTools 配列に追加
+                    if (!isReturned) {
+                        inUseTools = inUseTools.concat(entry.tools);
+                    }
+                });
+                // 重複を削除して inUseTools をローカルストレージに保存
+                inUseTools = [...new Set(inUseTools)];
+                localStorage.setItem('inUseTools', JSON.stringify(inUseTools));
+            }
+        }
+
+        // 返却履歴を読み込む
+        function loadReturnHistory() {
+            const returnHistory = JSON.parse(localStorage.getItem('returnHistory')) || [];
+            const returnTableBody = document.getElementById('returnHistoryTableBody');
+            returnTableBody.innerHTML = '';
+
+            if (returnHistory.length === 0) {
+                returnTableBody.innerHTML = '<tr><td colspan="4">返却履歴がありません。</td></tr>';
+            } else {
+                returnHistory.forEach((entry, index) => {
+                    const row = `<tr>
+                        <td>${index + 1}</td>
+                        <td>${entry.date}</td>
+                        <td>${entry.name || '名前無し'}</td>
+                        <td>${entry.tools.join(', ')}</td>
+                    </tr>`;
+                    returnTableBody.insertAdjacentHTML('beforeend', row);
+                });
+            }
+        }
+
+        // 返却確認
+        function confirmReturn(index) {
+            const confirmation = confirm('本当に返却しますか？');
+            if (confirmation) {
+                returnTools(index);
+            }
+        }
+
+        // 返却処理と履歴の更新
+        function returnTools(index) {
+            const history = JSON.parse(localStorage.getItem('toolHistory')) || [];
+            const returnedEntry = history[index];
+            const returnedTools = returnedEntry.tools;
+
+            // 使用中リストから返却されたツールを削除
+            let inUseTools = JSON.parse(localStorage.getItem('inUseTools')) || [];
+            inUseTools = inUseTools.filter(t => !returnedTools.includes(t));
+            localStorage.setItem('inUseTools', JSON.stringify(inUseTools));
+
+            // 返却履歴に保存
+            saveReturnHistory(returnedEntry);
+
+            // 貸出履歴のステータスを返却済みに更新
+            returnedEntry.status = '返却済み';
+            localStorage.setItem('toolHistory', JSON.stringify(history));
+
+            loadHistory();
+        }
+
+        // 返却履歴に保存する関数
+        function saveReturnHistory(entry) {
+            const returnHistory = JSON.parse(localStorage.getItem('returnHistory')) || [];
+            const now = new Date();
+
+            returnHistory.push({
+                date: now.toLocaleString(),
+                name: entry.name,
+                tools: entry.tools
+            });
+
+            localStorage.setItem('returnHistory', JSON.stringify(returnHistory));
+            loadReturnHistory();
+        }
+
+        
+        // 名前と貸出ツールを保存する関数を修正
+        function saveBorrowHistory() {
+            const name = getEmployeeName();
+            const tools = document.getElementById('borrowedTools').value.split(',')
+                .map(tool => tool.trim())
+                .filter(tool => tool);
+
+            if (tools.length === 0) {
+                alert('貸出ツールを入力してください。');
+                return;
+            }
+
+            const history = JSON.parse(localStorage.getItem('toolHistory')) || [];
+            const now = new Date();
+
+            history.push({
+                date: now.toLocaleString(),
+                name: name,
+                tools: tools,
+                status: '貸出中'
+            });
+
+            localStorage.setItem('toolHistory', JSON.stringify(history));
+            document.getElementById('borrowedTools').value = ''; // 入力フィールドをクリア
+            loadHistory();
+        }
+
+        // ページが読み込まれたら履歴を表示
+        window.onload = function() {
+            const employeeName = getEmployeeName();
+            document.getElementById('employeeName').textContent = `作業員: ${employeeName}`;
+            
+            // 既存の履歴読み込み
+            loadHistory();
+            loadReturnHistory();
+
+            // 作業員名が未指定の場合は警告を表示
+            if (employeeName === '作業員未指定') {
+                document.getElementById('warningMessage').style.display = 'block';
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>貸出履歴</h1>
+        <p id="employeeName"></p>
+
+        <div class="input-container">
+            <label for="borrowedTools">貸出ツール (カンマ区切り):</label>
+            <input type="text" id="borrowedTools" />
+        </div>
+        <button onclick="saveBorrowHistory()">貸出を保存</button>
+
+        <h2>貸出履歴</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>貸出日</th>
+                    <th>作業員の名前</th>
+                    <th>貸出ツール</th>
+                    <th>返却</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody"></tbody>
+        </table>
+
+        <h2>返却履歴</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>返却日</th>
+                    <th>作業員の名前</th>
+                    <th>返却ツール</th>
+                </tr>
+            </thead>
+            <tbody id="returnHistoryTableBody"></tbody>
+        </table>
+
+        <button onclick="location.href='index.html'">戻る</button>
+    </div>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>作業開始</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20%;
+            font-size: 2em;
+        }
+        .small-text {
+            font-size: 0.7em; /* 文字を少し小さくする */
+        }
+    </style>
+</head>
+<body>
+    <div id="message">作業開始！</div>
+    <div id="message" class="small-text">安全に作業を行ってください。</div>
+    <script>
+        // 3秒後に元の画面に戻る
+        setTimeout(function() {
+            window.location.href = 'worker_name.html'; // 元の画面に戻る
+        }, 3000);
+    </script>
+</body>
+</html>
+

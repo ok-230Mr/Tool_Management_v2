@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>機械工具</title>
+    <link rel="stylesheet" href="style2.css">
+    <link rel="stylesheet" href="stock.css">
+    <style>
+        #outOfStockTools {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #ffcccc;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 200px;
+        }
+
+        #inUseTools {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #ccffcc;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 200px;
+        }
+
+        /* スマホ用スタイル（画面幅768px以下の場合） */
+        @media screen and (max-width: 768px) {
+        #outOfStockTools, #inUseTools {
+                position: relative;
+                top: 0;
+                left: 0;
+                max-width: 100%;
+                margin: 10px auto;
+                padding: 15px;
+                transform: none;
+            }
+
+            #outOfStockTools {
+                background-color: #ffcccc;
+                margin-bottom: 10px;
+            }
+
+            #inUseTools {
+                background-color: #ccffcc;
+            }
+
+            /* テーブルの調整 */
+            #machineTable {
+                width: 100%;
+                font-size: 1em; /* スマホではフォントサイズを少し大きく */
+            }
+
+            /* ボタンのスタイル */
+            button {
+                width: 90%;
+                padding: 10px;
+                margin: 5px auto;
+                font-size: 1em;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <h1>工具リスト</h1>
+    <table id="machineTable">
+        <tbody></tbody>
+    </table>
+
+
+    <div>
+        <!-- 使用中のロープを表示するエリアを追加 -->
+        <div id="inUseTools">
+            <h2>使用中の工具</h2>
+            <ul id="inUseList"></ul>
+        </div>
+    </div>
+
+    <div id="outOfStockTools">
+        <h2>在庫切れのツール</h2>
+        <ul id="outOfStockList"></ul>
+    </div>
+
+    <h1 id="employeeName"></h1>
+
+    <table id="machineTable">
+        <tbody></tbody>
+    </table>
+    
+
+    <div id="selectedTools">選択されたツール: なし</div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="confirmSelection()">OK</button>
+        <button onclick="viewHistory()">履歴</button>
+    </div>
+
+    <script>
+
+        const machineData = [
+            {
+                name: "ワイヤーロープ",
+                tools: [
+                    { id: "wire_a", name: "ロープA", image: "wirerope_a.png", stock: 0 },
+                    { id: "wire_b", name: "ロープB", image: "wirerope_b.png", stock: 0 },
+                    { id: "wire_c", name: "ロープC", image: "wirerope_c.png", stock: 0 },
+                    { id: "wire_d", name: "ロープD", image: "wirerope_d.png", stock: 0 }
+                ]
+            },
+            {
+                name: "ドリル盤",
+                tools: [
+                    { id: "drill_twist", name: "ツイストドリル", stock: 0 },
+                    { id: "drill_center", name: "センタードリル", stock: 0 },
+                    { id: "drill_reamer", name: "リーマ", stock: 0 },
+                    { id: "drill_countersink", name: "カウンターシンク", stock: 0 }
+                ]
+            },
+            {
+                name: "溶接用工具",
+                tools: [
+                    { id: "weld_pliers", name: "ペンチ", stock: 0 },
+                    { id: "weld_handle", name: "ハンドル", stock: 0 },
+                    { id: "weld_spanner", name: "スパナ", stock: 0 },
+                    { id: "weld_cock", name: "ハンドルコック", stock: 0 }
+                ]
+            }
+        ];
+        
+        let inUseTools = [];   
+        let selectedTools = [];
+
+        function loadStockFromStorage() {
+            const storedToolStock = JSON.parse(localStorage.getItem('toolStock')) || [];
+            storedToolStock.forEach(storedTool => {
+                machineData.forEach(machine => {
+                    machine.tools.forEach(tool => {
+                        if (tool.name === storedTool.name) {
+                            tool.stock = storedTool.quantity;
+                        }
+                    });
+                });
+            });
+        }
+        function populateTable() {
+            const tableBody = document.querySelector("#machineTable tbody");
+
+            machineData.forEach((machine, machineIndex) => {
+                const row = tableBody.insertRow();
+                const selectAllButtonHTML = `<button class="select-all-btn" onclick="selectAllTools(${machineIndex})">すべて選択</button>`;
+                const toolListHTML = machine.tools.map((tool, toolIndex) =>
+                    `<div class="tool-item">
+                        <button class="tool-button${tool.stock === 0 ? ' out-of-stock' : ''}" id="button-${machineIndex}-${toolIndex}" onclick="toggleSelection(this, '${tool.name}', ${machineIndex}, ${toolIndex})">
+                            <img src="${tool.image}" alt="${tool.name}">
+                            <span>${tool.name}</span>
+                            <span>(在庫: ${tool.stock})</span>
+                        </button>
+                    </div>`
+                ).join('');
+
+                row.innerHTML = `
+                    <td>${machine.name}</td>
+                    <td>${selectAllButtonHTML}<div class="tool-list">${toolListHTML}</div></td>
+        `       ;
+            });
+        }
+
+        function toggleSelection(button, toolName, machineIndex, toolIndex) {
+            const tool = machineData[machineIndex].tools[toolIndex];
+            if (tool.stock === 0 && !button.classList.contains('selected')) {
+                alert(`${toolName}は在庫切れです。使用できません。`);
+                return;
+            }
+            button.classList.toggle('selected');
+            if (button.classList.contains('selected')) {
+                selectedTools.push(toolName);
+                tool.stock--;
+                // 使用中のリストに追加
+                inUseTools.push(toolName);
+                updateInUseList();
+            } else {
+                selectedTools = selectedTools.filter(tool => tool !== toolName);
+                tool.stock++;
+                // 使用中のリストから削除
+                inUseTools = inUseTools.filter(t => t !== toolName);
+                updateInUseList();
+            }
+            updateToolDisplay(button, tool);           // ボタンやツールの表示更新
+            updateSelectedToolsDisplay();              // 選択されたツールリストの表示更新
+            updateInUseList();
+            updateOutOfStockList();                    // 在庫切れツールリストの表示更新
+            // 在庫データをlocalStorageに保存
+            saveStockToStorage();
+        }
+
+        function saveStockToStorage() {
+            const storedToolStock = machineData.map(machine => {
+                return machine.tools.map(tool => ({
+                    name: tool.name,
+                    quantity: tool.stock
+                }));
+            }).flat();
+            localStorage.setItem('toolStock', JSON.stringify(storedToolStock));
+        }
+
+        function updateToolDisplay(button, tool) {
+            const stockSpan = button.querySelector('span:last-child');
+            stockSpan.textContent = `(在庫: ${tool.stock})`;
+            if (tool.stock === 0) {
+                button.classList.add('out-of-stock');
+            } else {
+                button.classList.remove('out-of-stock');
+            }
+        }   
+ 
+
+        function updateOutOfStockList() {
+            const outOfStockList = document.getElementById('outOfStockList');
+            outOfStockList.innerHTML = '';
+            machineData.forEach(machine => {
+                machine.tools.forEach(tool => {
+                    if (tool.stock === 0) {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `${machine.name}: ${tool.name}`;
+                        outOfStockList.appendChild(listItem);
+                    }
+                });
+            });
+        }
+
+        function selectAllTools(machineIndex) {
+            const buttons = document.querySelectorAll(`#machineTable tbody tr:nth-child(${machineIndex + 1}) .tool-button`);
+    
+            buttons.forEach(button => {
+                // 在庫数が含まれている場合の名前の分離
+                const toolName = button.querySelector('span').textContent.split(' (')[0]; 
+
+                // ツールが未選択かつ在庫切れでない場合のみ選択
+                if (!button.classList.contains('selected') && !button.classList.contains('out-of-stock')) {
+                    const toolIndex = Array.from(buttons).indexOf(button); // ボタンのインデックスを取得
+                    toggleSelection(button, toolName, machineIndex, toolIndex); // 選択状態と在庫管理
+                }
+            });
+
+            // 選択されたツールリストを更新
+            updateSelectedToolsDisplay();
+        }
+
+
+        function updateOutOfStockList() {
+            const outOfStockList = document.getElementById('outOfStockList');
+            outOfStockList.innerHTML = '';
+            machineData.forEach(machine => {
+                machine.tools.forEach(tool => {
+                    if (tool.stock === 0) {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `${machine.name}: ${tool.name}`;
+                        outOfStockList.appendChild(listItem);
+                    }
+                });
+            });
+        }
+
+        function updateSelectedToolsDisplay() {
+            const selectedToolsDiv = document.getElementById('selectedTools');
+            if (selectedTools.length > 0) {
+                selectedToolsDiv.innerHTML = `選択されたツール: ${selectedTools.join(', ')}`;
+            } else {
+                selectedToolsDiv.innerHTML = '選択されたツール: なし';
+            }
+        }
+
+        function updateInUseList() {
+            const inUseList = document.getElementById('inUseList');
+            inUseList.innerHTML = '';
+            const inUseTools = JSON.parse(localStorage.getItem('inUseTools'))
+            if (inUseTools.length === 0) {
+                inUseList.innerHTML = '<li>使用中のロープはありません。</li>';
+            } else {
+                inUseTools.forEach(tool => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = tool;
+                    inUseList.appendChild(listItem);
+                });
+            }
+        }
+
+        function returnTools(index) {
+            const history = JSON.parse(localStorage.getItem('toolHistory')) || [];
+            const returnedTools = history[index].tools;
+
+            // 使用中リストから返却されたツールを削除
+            returnedTools.forEach(tool => {
+                inUseTools = inUseTools.filter(t => t !== tool);
+            });
+                updateInUseList();  // 使用中リストを更新
+
+            history.splice(index, 1);  // 履歴から削除
+            localStorage.setItem('toolHistory', JSON.stringify(history));
+            loadHistory();  // 履歴テーブルを更新
+        }
+
+
+        function saveToHistory() {
+            const history = JSON.parse(localStorage.getItem('toolHistory')) || [];
+            const now = new Date();
+            history.push({
+                date: now.toLocaleString(),
+                tools: selectedTools
+            });
+            localStorage.setItem('toolHistory', JSON.stringify(history));
+            // 使用中の工具リストを更新
+            const inUseTools = JSON.parse(localStorage.getItem('inUseTools')) || [];
+            const updatedInUseTools = [...new Set([...inUseTools, ...selectedTools])];
+            localStorage.setItem('inUseTools', JSON.stringify(updatedInUseTools));
+        }
+
+        function confirmSelection() {
+            if (selectedTools.length > 0) {
+                saveToHistory();
+                updateInUseList();
+                window.location.href = "work_start.html";
+            } else {
+                alert("工具が選択されていません");
+            }
+            const employeeName = getEmployeeNameFromURL();
+            alert(`${employeeName}さんが選択したツール: ${selectedTools.join(', ')}`);
+        }
+
+        function displayEmployeeName() {
+            const employeeName = getEmployeeNameFromURL();
+            if (employeeName) {
+                document.getElementById('employeeName').textContent = `作業員: ${employeeName}`;
+            }
+        }
+
+
+        function viewHistory() {
+            window.location.href = 'history.html';
+        }
+
+        function viewEmployee (){
+            window.location.href = "employee-list.html";
+        }
+
+        function viewWorkStart(){
+            window.location.href = "work_start.html";  
+        }
+
+
+        window.onload = function() {
+            loadStockFromStorage();
+            populateTable();
+            displayEmployeeName();
+            saveToHistory();
+            updateInUseList();  // 使用中リストの初期化
+            updateOutOfStockList();
+            initializeToolPage();
+        };
+    </script>
+</body>
+</html>

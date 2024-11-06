@@ -1,0 +1,53 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.scrollable {
+    width: 200px;
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background-color: #f0f0f0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#outOfStockTools {
+    background-color: #ffcccc;
+}
+
+#inUseTools {
+    background-color: #ccffcc;
+}
+
+.scrollable h2 {
+    margin-top: 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #aaa;
+}
+
+.scrollable ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.scrollable ul li {
+    margin-bottom: 10px;
+    padding: 5px;
+    border: 1px solid #aaa;
+    background-color: #fff;
+    border-radius: 3px;
+}

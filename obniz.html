@@ -1,0 +1,106 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://unpkg.com/obniz@3.x/obniz.js" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <div id="obniz-debug"></div>
+    <div>
+      <h3>ボタンを押した回数: <span id="count-display">0</span></h3>
+      <h3>再ロックまで: <span id="countdown-display">0</span> 秒</h3>
+    </div>
+    <script>
+      var obniz = new Obniz("OBNIZ_ID_HERE");
+
+      // ボタンとサーボのピン番号の定義
+      const buttonPin = 11;  // ボタンの信号ピン
+      const servoPin = 0;    // サーボモーターの信号ピン
+      let count = 0;         // ボタン押下回数をカウントする変数
+      let countdown = 0;     // カウントダウンの変数
+      let isServoMoving = false;  // サーボモーターの動作中を示すフラグ
+      let lastButtonState = true; // ボタンの前回の状態
+
+      obniz.onconnect = async function() {
+        
+        // ボタンとサーボの設定
+        obniz.io10.output(true);  // ボタンのVCC
+        obniz.io9.output(false);  // ボタンのGND
+        var button = obniz.getIO(buttonPin);
+        button.pull("5v");  // プルアップ抵抗を設定
+
+        // サーボモーターの設定
+        obniz.io1.output(true);  // サーボのVCC
+        obniz.io2.output(false); // サーボのGND
+        var servo = obniz.wired("ServoMotor", {signal: servoPin});
+        servo.angle(0);  // 初期位置を0度に設定
+
+        // ボタンの初期状態を設定（起動時の1カウント防止）
+        lastButtonState = await button.input(); // ボタンの初期状態を取得
+
+        // ボタンの押下回数を表示する関数
+        function updateCountDisplay() {
+          document.getElementById("count-display").innerText = count;
+        }
+
+        // カウントダウンを表示する関数
+        function updateCountdownDisplay(seconds) {
+          document.getElementById("countdown-display").innerText = seconds;
+        }
+
+        // repeatノードで0.1秒ごとにボタン状態をチェック
+        obniz.repeat(async function() {
+          let buttonState = await button.input();  // ボタンの現在の状態を取得
+
+          // ボタンが押された時の処理
+          if (buttonState === false && lastButtonState === true && !isServoMoving) {
+            count += 1;  // カウントを1増加
+            updateCountDisplay();  // 画面にカウントを表示
+
+            // サーボを180度に移動し、カウントダウン開始
+            servo.angle(180);
+            isServoMoving = true;
+            countdown = 10;
+
+            // カウントダウン処理
+            const countdownInterval = setInterval(() => {
+              countdown -= 1;
+              updateCountdownDisplay(countdown);
+              
+              if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                servo.angle(0);  // カウントダウン終了後にサーボを0度に戻す
+                isServoMoving = false;  // フラグをリセット
+              }
+            }, 1000);
+          }
+
+          // ボタンの状態を更新
+          lastButtonState = buttonState;
+        }, 100);  // 0.1秒ごとに繰り返し実行
+
+      // ボタンの押下回数を保存する関数
+      function saveCountToLocalStorage() {
+        localStorage.setItem('buttonPressCount', count);
+      }
+
+       // ボタンが押されたときの処理に追加
+      if (buttonState === false && lastButtonState === true && !isServoMoving) {
+        count += 1;  // カウントを1増加
+        updateCountDisplay();  // 画面にカウントを表示
+        saveCountToLocalStorage();  // ローカルストレージに保存
+      }
+
+      window.onload = function() {
+        count = parseInt(localStorage.getItem('buttonPressCount')) || 0;
+        updateCountDisplay();  // 読み込んだカウントを表示
+      };
+        
+      };
+      
+    </script>
+  </body>
+</html>
+

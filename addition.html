@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ストック管理</title>
+</head>
+<body>
+    <h1>ストック管理ページ</h1>
+
+    <div>
+        <label for="toolSelect">工具名:</label>
+        <select id="toolSelect"></select>
+
+        <label for="stock">在庫数:</label>
+        <input type="number" id="stock" min="0" />
+
+        <button onclick="addStock()">在庫を追加</button>
+    </div>
+
+    <script>
+        // 工具データ
+        const machineData = [
+        {
+                name: "ワイヤーロープ",
+                tools: [
+                    { id: "wire_a", name: "ロープA", image: "C:\\Users\\ok230221\\Pictures\\Screenshots\\wirerope_a.png", stock: 4 },
+                    { id: "wire_b", name: "ロープB", image: "C:\\Users\\ok230221\\Pictures\\Screenshots\\wirerope_b.png", stock: 1 },
+                    { id: "wire_c", name: "ロープC", image: "C:\\Users\\ok230221\\Pictures\\Screenshots\\wirerope_c.png", stock: 3 },
+                    { id: "wire_d", name: "ロープD", image: "C:\\Users\\ok230221\\Pictures\\Screenshots\\wirerope_d.png", stock: 2 }
+                ]
+            },
+            {
+                name: "ドリル盤",
+                tools: [
+                    { id: "drill_twist", name: "ツイストドリル", stock: 2 },
+                    { id: "drill_center", name: "センタードリル", stock: 7 },
+                    { id: "drill_reamer", name: "リーマ", stock: 0 },
+                    { id: "drill_countersink", name: "カウンターシンク", stock: 2 }
+                ]
+            },
+            {
+                name: "溶接用工具",
+                tools: [
+                    { id: "weld_pliers", name: "ペンチ", stock: 3 },
+                    { id: "weld_handle", name: "ハンドル", stock: 5 },
+                    { id: "weld_spanner", name: "スパナ", stock: 2 },
+                    { id: "weld_cock", name: "ハンドルコック", stock: 4 }
+                ]
+            }
+        ];
+
+        // 工具名をドロップダウンに追加
+        function populateToolSelect() {
+            const toolSelect = document.getElementById('toolSelect');
+            machineData.forEach(machine => {
+                machine.tools.forEach(tool => {
+                    const option = document.createElement('option');
+                    option.value = tool.name;
+                    option.textContent = `${machine.name} - ${tool.name}`;
+                    toolSelect.appendChild(option);
+                });
+            });
+        }
+
+        // 在庫を追加する関数
+        function addStock() {
+            const toolName = document.getElementById('toolSelect').value;
+            const stock = parseInt(document.getElementById('stock').value, 10);
+            if (!toolName || isNaN(stock)) {
+                alert('正しい工具名と在庫数を入力してください。');
+                return;
+            }
+            const toolStock = JSON.parse(localStorage.getItem('toolStock')) || [];
+            const existingToolIndex = toolStock.findIndex(tool => tool.name === toolName);
+            if (existingToolIndex !== -1) {
+                toolStock[existingToolIndex].quantity = stock;
+            } else {
+                toolStock.push({ name: toolName, quantity: stock });
+            }
+            localStorage.setItem('toolStock', JSON.stringify(toolStock));
+            alert('在庫が追加されました。');
+        }
+
+        // ページロード時に工具をドロップダウンに追加
+        window.onload = populateToolSelect;
+    </script>
+</body>
+</html>
+

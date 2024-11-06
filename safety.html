@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全管理</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://unpkg.com/obniz@3.x/obniz.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>安全管理</h2>
+        <table class="table table-bordered" id="toolTable">
+            <thead>
+                <tr>
+                    <th>種類</th>
+                    <th>使用回数</th>
+                    <th>使用不可</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 工具のデータがここに挿入される -->
+            </tbody>
+        </table>
+
+        <button onclick="location.href='index.html'">戻る</button>
+    </div>
+
+    <script>
+        // obnizの接続
+        var obniz = new Obniz("OBNIZ_ID_HERE");
+        let toolData = [];
+
+        obniz.onconnect = async function() {
+            // obnizからデータを取得してtoolDataを更新する処理
+            // 使用例として、各工具の使用回数をボタン押下で取得する例を示します
+            const buttonPin = 11;
+            obniz.io10.output(true);  // ボタンのVCC
+            obniz.io9.output(false);  // ボタンのGND
+            var button = obniz.getIO(buttonPin);
+            button.pull("5v");
+
+            // サンプルの工具データ（ここでは、使用回数をボタン押下回数として取得）
+            toolData = [
+                { name: "ロープA", usage: 0 },
+                { name: "ロープB", usage: 0 },
+                { name: "ロープC", usage: 0 },
+                { name: "ロープD", usage: 0 },
+                { name: "ツイストドリル", usage: 0 },
+                { name: "リーマ", usage: 0 },
+                { name: "カウンターシンク", usage: 0 },
+                { name: "ベンチ", usage: 0 },
+                { name: "ハンドル", usage: 0 },
+                { name: "スパナ", usage: 0 },
+                { name: "ハンドルコック", usage: 0 },
+            ];
+
+            let count = 0; // ボタン押下回数をカウントする変数
+
+            // ボタン押下を監視し、使用回数を更新
+            obniz.repeat(async function() {
+                let buttonState = await button.input();
+
+                // ボタンが押されたら使用回数を増加
+                if (!buttonState) {
+                    count++;
+                    toolData.forEach(tool => {
+                        tool.usage = count;  // 各工具の使用回数にボタンの押下回数を設定
+                    });
+                    populateTable(); // テーブルの更新
+                }
+            }, 100); // 0.1秒ごとに状態をチェック
+        };
+
+        // 工具データをテーブルに挿入し、5回以上で赤色表示、使用不可チェックボックスを追加
+        function populateTable() {
+            const tbody = document.getElementById("toolTable").querySelector("tbody");
+            tbody.innerHTML = ""; // テーブルの内容をクリア
+
+            toolData.forEach(tool => {
+                const row = document.createElement("tr");
+
+                // 工具名セル
+                const nameCell = document.createElement("td");
+                nameCell.textContent = tool.name;
+                row.appendChild(nameCell);
+
+                // 使用回数セル（5回以上で赤く表示）
+                const usageCell = document.createElement("td");
+                usageCell.textContent = tool.usage;
+                if (tool.usage > 5) {
+                    usageCell.style.backgroundColor = "red";
+                    usageCell.style.color = "white";
+                }
+                row.appendChild(usageCell);
+
+                // 使用不可チェックボックスセル
+                const disableCell = document.createElement("td");
+                const disableCheckbox = document.createElement("input");
+                disableCheckbox.type = "checkbox";
+                disableCheckbox.addEventListener("change", function() {
+                    setToolAvailability(tool.name, !this.checked);
+                });
+                disableCell.appendChild(disableCheckbox);
+                row.appendChild(disableCell);
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // 使用可否を制御する関数
+        function setToolAvailability(toolName, isAvailable) {
+            console.log(`${toolName} は ${isAvailable ? "使用可" : "使用不可"} に設定されました。`);
+            // 機械工具ページで使用可否を制御する処理を追加（例: データベース更新やAPI呼び出し）
+        }
+
+        // 初期テーブル表示
+        populateTable();
+        window.onload = populateToolSelect;
+    </script>
+</body>
+</html>

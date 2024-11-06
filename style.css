@@ -1,0 +1,47 @@
+body {
+    background: #fff;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 980px;
+    table-layout: fixed;
+    margin: auto;
+}
+th,
+td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+    vertical-align: top;
+}
+th:nth-child(1),
+td:nth-child(1),
+th:nth-child(2),
+td:nth-child(2) {
+    text-align: center;
+    width: 8em;
+}
+th:nth-child(3),
+td:nth-child(3) {
+    width: auto;
+}
+img {
+    max-width: 120px;
+    max-height: 120px;
+}
+.tool-list {
+    display: flex;
+    flex-direction: column;
+}
+.tool-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+.tool-item img {
+    margin-right: 10px;
+}
+input {
+    zoom: 200%
+}

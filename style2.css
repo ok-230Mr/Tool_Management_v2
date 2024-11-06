@@ -1,0 +1,70 @@
+body {
+    background: #fff;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 720px;
+    table-layout: auto;
+    margin: auto;
+}
+td {
+    border: 1px solid black;
+    padding: 0.5em;
+    text-align: left;
+    vertical-align: top;
+}
+img {
+    width: 20vw;
+    max-width: 180px;
+    height: auto;
+}
+.tool-list {
+    display: flex;
+    flex-direction: column;
+}
+.tool-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5em;
+}
+.tool-button {
+    border: 2px solid black;
+    background-color: white;
+    cursor: pointer;
+    padding: 0.5em;
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.5em;
+}
+.tool-button.selected {
+    background-color: lightblue;
+    border-color: blue;
+}
+.tool-button img {
+    margin-right: 0.5em;
+}
+#selectedTools {
+    margin: 20px;
+    padding: 10px;
+    border: 1px solid black;
+    background-color: #f0f0f0;
+    width: 90%;
+    max-width: 720px;
+    margin: auto;
+}
+.select-all-btn {
+    margin: 10px 0;
+    cursor: pointer;
+    padding: 5px 10px;
+    background-color: lightgray;
+    border: 1px solid black;
+}
+
+.tool-button.out-of-stock {
+    background-color: #ffcccc;
+    cursor: not-allowed;
+}
+.tool-button.out-of-stock img {
+    opacity: 0.5;
+}
