@@ -34,14 +34,13 @@
 
         obniz.onconnect = async function() {
             // obnizからデータを取得してtoolDataを更新する処理
-            // 使用例として、各工具の使用回数をボタン押下で取得する例を示します
             const buttonPin = 11;
             obniz.io10.output(true);  // ボタンのVCC
             obniz.io9.output(false);  // ボタンのGND
             var button = obniz.getIO(buttonPin);
             button.pull("5v");
 
-            // サンプルの工具データ（ここでは、使用回数をボタン押下回数として取得）
+            // サンプルの工具データ
             toolData = [
                 { name: "ロープA", usage: 0 },
                 { name: "ロープB", usage: 0 },
@@ -57,20 +56,27 @@
             ];
 
             let count = 0; // ボタン押下回数をカウントする変数
+            let isButtonPressed = false; // ボタンが押されているかのフラグ
 
             // ボタン押下を監視し、使用回数を更新
             obniz.repeat(async function() {
                 let buttonState = await button.input();
 
-                // ボタンが押されたら使用回数を増加
-                if (!buttonState) {
-                    count++;
+                // ボタンが押されていて、かつ未押下状態からの変化のみをカウント
+                if (!buttonState && !isButtonPressed) {
+                    isButtonPressed = true;  // ボタン押下中フラグを立てる
+                    count++;  // カウントを増やす
                     toolData.forEach(tool => {
-                        tool.usage = count;  // 各工具の使用回数にボタンの押下回数を設定
+                        tool.usage = count;  // 各工具の使用回数を更新
                     });
                     populateTable(); // テーブルの更新
                 }
-            }, 100); // 0.1秒ごとに状態をチェック
+
+                // ボタンが離されたらフラグをリセット
+                if (buttonState) {
+                    isButtonPressed = false;
+                }
+            }, 100);  // 0.1秒ごとに状態をチェック
         };
 
         // 工具データをテーブルに挿入し、5回以上で赤色表示、使用不可チェックボックスを追加
@@ -117,7 +123,6 @@
 
         // 初期テーブル表示
         populateTable();
-        window.onload = populateToolSelect;
     </script>
 </body>
 </html>
